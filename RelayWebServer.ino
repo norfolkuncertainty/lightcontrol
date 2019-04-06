@@ -1,17 +1,16 @@
-#include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 
 const int Relay = 5;
 const char* ssid = "SSID";
 const char* password = "WIFI PASSWORD";
+int status = 0;
 
 ESP8266WebServer server(80);
 
 void handleOn() {
   Serial.println("\n\nClient Connected");
-  server.send(200, "text/plain", "Activating Relay");
+  server.send(200, "text/plain", "{\"status\":\"on\"}");
   Serial.println("Message Sent");
   digitalWrite(LED_BUILTIN, LOW);  
   digitalWrite(Relay, HIGH);  
@@ -21,12 +20,22 @@ void handleOn() {
 
 void handleOff() {
   Serial.println("\n\nClient Connected");
-  server.send(200, "text/plain", "Dectivating Relay");
+  server.send(200, "text/plain", "{\"status\":\"off\"}");
   Serial.println("Message Sent");
   digitalWrite(LED_BUILTIN, HIGH);  
   digitalWrite(Relay, LOW);  
   Serial.println("Relay Off");
   Serial.println("Client Disconnected");
+}
+
+void handleStatus() {
+  status = digitalRead(Relay);
+  Serial.println("\n\nClient Connected");
+  if (status == 0) 
+    server.send(200, "text/plain", "{\"status\":\"off\"}");
+  else
+    server.send(200, "text/plain", "{\"status\":\"on\"}");
+  Serial.println("Message Sent");
 }
 
 void handleNotFound(){
@@ -53,6 +62,8 @@ void setup(void){
   
   digitalWrite(LED_BUILTIN, LOW);
   Serial.begin(9200);
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname("lightRelay");
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -67,12 +78,9 @@ void setup(void){
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("esp8266")) {
-    Serial.println("MDNS responder started");
-  }
-
   server.on("/on", handleOn);
   server.on("/off", handleOff);
+  server.on("/status", handleStatus);
   server.onNotFound(handleNotFound);
 
   server.begin();
