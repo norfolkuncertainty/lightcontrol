@@ -17,10 +17,10 @@ response = JSON.parse(Net::HTTP.get('api.sunrise-sunset.org', "/json?lat=#{latit
 #Parse json response and extract the sunset time, adding the systems utc offset to obtain the local time of the sunset
 sunset = Time.parse(response['results']['sunset']) + Time.now.utc_offset
 #Create 'at' job on local linux box to switch relay on
-system"echo 'curl http://relay.home/on' | at #{sunset.strftime("%H:%M")}"
+system"echo curl http://#{relayHost}/on | at #{sunset.strftime("%H:%M")}"
 
 #Parse given off time and add randomly selected delay
 offTime = Time.parse(nightOff) + delay
 #Create 'at' job on local linux box to switch relay off
-system"echo 'curl http://relay.home/off' | at #{offTime.strftime('%H:%M')}"
+system"echo curl http://#{relayHost}/off | at #{offTime.strftime('%H:%M')}"
 
